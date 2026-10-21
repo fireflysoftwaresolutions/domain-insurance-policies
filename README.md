@@ -72,7 +72,7 @@ Status values accepted by the core: `QUOTE`, `BOUND`, `IN_FORCE`, `LAPSED`, `CAN
 
 - Java 25
 - Apache Maven 3.9+
-- `core-insurance-policies-sdk` 26.10.3
+- `core-insurance-policies-sdk` 26.10.4
 - Apache Kafka on `localhost:9092` when event publishing is left at the default
 
 ### Environment
