@@ -19,8 +19,14 @@ package io.fireflysoftware.domain.insurance.policies.core.commands;
 import io.fireflysoftware.core.insurance.policies.sdk.model.PolicyDTO;
 import org.fireflyframework.cqrs.command.Command;
 
+import java.util.UUID;
+
 /**
- * Asks the core to create a policy.
+ * Asks the core to create a policy after the party and the contract have been linked.
  */
-public record CreatePolicyCommand(PolicyDTO record) implements Command<PolicyDTO> {
+public record CreatePolicyCommand(PolicyDTO record, UUID partyId) implements Command<PolicyDTO> {
+
+    public CreatePolicyCommand(PolicyDTO record) {
+        this(record, null);
+    }
 }

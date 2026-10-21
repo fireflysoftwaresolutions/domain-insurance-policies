@@ -16,6 +16,7 @@
 
 package io.fireflysoftware.domain.insurance.policies.web.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fireflysoftware.core.insurance.policies.sdk.model.PolicyDTO;
 import io.fireflysoftware.domain.insurance.policies.core.commands.CreatePolicyCommand;
 import io.fireflysoftware.domain.insurance.policies.core.commands.UpdatePolicyCommand;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -54,12 +56,14 @@ import java.util.UUID;
 public class PoliciesController {
 
     private final PoliciesService service;
+    private final ObjectMapper json;
 
-    public PoliciesController(PoliciesService service) {
+    public PoliciesController(PoliciesService service, ObjectMapper json) {
         this.service = service;
+        this.json = json;
     }
 
-    @Operation(summary = "Create policy", description = "Runs the register saga against core-insurance-policies.")
+    @Operation(summary = "Create policy", description = "Validates the party, links the contract, then runs the register saga.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Created",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -67,8 +71,11 @@ public class PoliciesController {
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content)
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<PolicyDTO>> create(@RequestBody PolicyDTO body) {
-        return service.create(new CreatePolicyCommand(body))
+    public Mono<ResponseEntity<PolicyDTO>> create(@RequestBody Map<String, Object> body) {
+        Object party = body.remove("partyId");
+        UUID partyId = party == null ? null : UUID.fromString(String.valueOf(party));
+        PolicyDTO policy = json.convertValue(body, PolicyDTO.class);
+        return service.create(new CreatePolicyCommand(policy, partyId))
                 .map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created));
     }
 

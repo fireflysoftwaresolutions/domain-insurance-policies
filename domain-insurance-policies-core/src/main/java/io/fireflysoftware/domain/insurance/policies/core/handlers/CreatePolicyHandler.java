@@ -19,6 +19,7 @@ package io.fireflysoftware.domain.insurance.policies.core.handlers;
 import io.fireflysoftware.core.insurance.policies.sdk.api.PoliciesApi;
 import io.fireflysoftware.core.insurance.policies.sdk.model.PolicyDTO;
 import io.fireflysoftware.domain.insurance.policies.core.commands.CreatePolicyCommand;
+import io.fireflysoftware.domain.insurance.policies.core.shared.CustomerContractLink;
 import lombok.extern.slf4j.Slf4j;
 import org.fireflyframework.cqrs.annotations.CommandHandlerComponent;
 import org.fireflyframework.cqrs.command.CommandHandler;
@@ -34,14 +35,21 @@ import java.util.UUID;
 public class CreatePolicyHandler extends CommandHandler<CreatePolicyCommand, PolicyDTO> {
 
     private final PoliciesApi policiesApi;
+    private final CustomerContractLink customerContract;
 
-    public CreatePolicyHandler(PoliciesApi policiesApi) {
+    public CreatePolicyHandler(PoliciesApi policiesApi, CustomerContractLink customerContract) {
         this.policiesApi = policiesApi;
+        this.customerContract = customerContract;
     }
 
     @Override
     protected Mono<PolicyDTO> doHandle(CreatePolicyCommand command) {
         log.debug("Creating policy");
-        return policiesApi.createPolicy(command.record(), UUID.randomUUID().toString());
+        PolicyDTO record = command.record();
+        return customerContract.bind(command.partyId(), record.getContractId(), record.getProductId(), record.getCurrency(), null)
+                .flatMap(contractId -> {
+                    record.setContractId(contractId);
+                    return policiesApi.createPolicy(record, UUID.randomUUID().toString());
+                });
     }
 }
