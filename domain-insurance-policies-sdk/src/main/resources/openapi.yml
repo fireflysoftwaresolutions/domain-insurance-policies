@@ -1,0 +1,196 @@
+openapi: 3.0.1
+info:
+  title: Domain Insurance Policies API
+  description: "Orchestrates insurance policy records through core-insurance-policies.\
+    \ It records policy status through the policies core. It does not post policy\
+    \ transactions, does not call a sanctions provider, and does not certify IFRS\
+    \ 17 or Solvency II."
+  contact:
+    name: Firefly Software Foundation
+    email: dev@fireflysoftware.io
+  version: 1.0.0
+servers:
+- url: https://openplatform.fireflysoftware.io/domain-insurance-policies
+  description: Development Environment
+- url: /
+  description: Local Development Environment
+tags:
+- name: Policies
+  description: Domain orchestration for insurance policy records
+paths:
+  /api/v1/policies/{policyId}/status:
+    put:
+      tags:
+      - Policies
+      summary: Update status
+      description: Runs the status saga against core-insurance-policies.
+      operationId: updateStatus
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusChangeRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+  /api/v1/policies:
+    post:
+      tags:
+      - Policies
+      summary: Create policy
+      description: Runs the register saga against core-insurance-policies.
+      operationId: create
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyDTO"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "400":
+          description: Invalid request
+  /api/v1/policies/{policyId}:
+    get:
+      tags:
+      - Policies
+      summary: Get policy
+      description: Reads one record from core-insurance-policies.
+      operationId: get
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+components:
+  schemas:
+    StatusChangeRequest:
+      type: object
+      properties:
+        status:
+          type: string
+        statusReason:
+          type: string
+    PolicyDTO:
+      required:
+      - contractId
+      - inceptionDate
+      - lineOfBusiness
+      - policyNumber
+      - policyStatus
+      - productId
+      - tenantId
+      type: object
+      properties:
+        policyId:
+          type: string
+          format: uuid
+          nullable: true
+        tenantId:
+          type: string
+          format: uuid
+        contractId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        lineOfBusiness:
+          type: string
+          enum:
+          - MOTOR
+          - PROPERTY
+          - LIABILITY
+          - LIFE
+          - HEALTH
+          - MARINE
+          - AVIATION
+          - ACCIDENT
+          - OTHER
+        policyStatus:
+          type: string
+          enum:
+          - QUOTE
+          - BOUND
+          - IN_FORCE
+          - LAPSED
+          - CANCELLED
+          - EXPIRED
+        currency:
+          type: string
+          nullable: true
+        inceptionDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        renewalDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
