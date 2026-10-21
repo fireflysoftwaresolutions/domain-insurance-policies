@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.fireflysoftware</groupId>
         <artifactId>firefly-parent</artifactId>
-        <version>26.10.4</version>
+        <version>26.10.5</version>
         <relativePath/>
     </parent>
 
     <artifactId>domain-insurance-policies</artifactId>
     <name>domain-insurance-policies</name>
-    <version>26.10.4</version>
+    <version>26.10.5</version>
     <packaging>pom</packaging>
     <description>Orchestrates insurance policy create, update, status, and close commands through the policies core. Developed by the Firefly Software Foundation.</description>
     <url>https://openplatform.fireflysoftware.io/domain-insurance-policies</url>
