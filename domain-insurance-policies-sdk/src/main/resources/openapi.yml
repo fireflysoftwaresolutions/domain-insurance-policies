@@ -2,9 +2,9 @@ openapi: 3.0.1
 info:
   title: Domain Insurance Policies API
   description: "Orchestrates insurance policy records through core-insurance-policies.\
-    \ It records policy status through the policies core. It does not post policy\
-    \ transactions, does not call a sanctions provider, and does not certify IFRS\
-    \ 17 or Solvency II."
+    \ It creates, updates, changes status, and closes policies through the policies\
+    \ core. It does not post policy transactions, does not call a sanctions provider,\
+    \ and does not certify IFRS 17 or Solvency II."
   contact:
     name: Firefly Software Foundation
     email: dev@fireflysoftware.io
@@ -55,36 +55,6 @@ paths:
                 $ref: "#/components/schemas/PolicyDTO"
         "404":
           description: Not found
-  /api/v1/policies:
-    post:
-      tags:
-      - Policies
-      summary: Create policy
-      description: Runs the register saga against core-insurance-policies.
-      operationId: create
-      parameters:
-      - name: X-Idempotency-Key
-        in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
-        required: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PolicyDTO"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PolicyDTO"
-        "400":
-          description: Invalid request
   /api/v1/policies/{policyId}:
     get:
       tags:
@@ -116,6 +86,211 @@ paths:
                 $ref: "#/components/schemas/PolicyDTO"
         "404":
           description: Not found
+    put:
+      tags:
+      - Policies
+      summary: Update policy
+      description: Runs the update saga against core-insurance-policies. Status is
+        left unchanged.
+      operationId: update
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyDTO"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+    delete:
+      tags:
+      - Policies
+      summary: Remove policy
+      description: Deletes the record through core-insurance-policies when that core
+        allows removal.
+      operationId: remove
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+  /api/v1/policies/{policyId}/lapse:
+    post:
+      tags:
+      - Policies
+      summary: Lapse policy
+      description: Lapses an in-force policy when the policies core allows LAPSED.
+      operationId: lapse
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+  /api/v1/policies/{policyId}/expire:
+    post:
+      tags:
+      - Policies
+      summary: Expire policy
+      description: Expires a policy when the policies core allows EXPIRED.
+      operationId: expire
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+  /api/v1/policies/{policyId}/cancel:
+    post:
+      tags:
+      - Policies
+      summary: Cancel policy
+      description: Cancels a policy when the policies core allows CANCELLED.
+      operationId: cancel
+      parameters:
+      - name: policyId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "404":
+          description: Not found
+  /api/v1/policies:
+    post:
+      tags:
+      - Policies
+      summary: Create policy
+      description: Runs the register saga against core-insurance-policies.
+      operationId: create
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyDTO"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDTO"
+        "400":
+          description: Invalid request
 components:
   schemas:
     StatusChangeRequest:
@@ -194,3 +369,8 @@ components:
           type: string
           format: date-time
           nullable: true
+    ReasonRequest:
+      type: object
+      properties:
+        statusReason:
+          type: string

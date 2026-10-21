@@ -15,7 +15,7 @@
     <name>domain-insurance-policies</name>
     <version>26.10.3</version>
     <packaging>pom</packaging>
-    <description>Orchestrates insurance policy records and status changes through the policies core. Developed by the Firefly Software Foundation.</description>
+    <description>Orchestrates insurance policy create, update, status, and close commands through the policies core. Developed by the Firefly Software Foundation.</description>
     <url>https://openplatform.fireflysoftware.io/domain-insurance-policies</url>
 
     <modules>

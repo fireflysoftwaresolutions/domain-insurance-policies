@@ -38,7 +38,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 info = @Info(
         title = "Domain Insurance Policies API",
         version = "1.0.0",
-        description = "Orchestrates insurance policy records through core-insurance-policies. It records policy status through the policies core. It does not post policy transactions, does not call a sanctions provider, and does not certify IFRS 17 or Solvency II.",
+        description = "Orchestrates insurance policy records through core-insurance-policies. It creates, updates, changes status, and closes policies through the policies core. It does not post policy transactions, does not call a sanctions provider, and does not certify IFRS 17 or Solvency II.",
         contact = @Contact(
                 name = "Firefly Software Foundation",
                 email = "dev@fireflysoftware.io"

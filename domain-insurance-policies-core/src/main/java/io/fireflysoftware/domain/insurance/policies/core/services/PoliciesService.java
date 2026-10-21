@@ -19,6 +19,7 @@ package io.fireflysoftware.domain.insurance.policies.core.services;
 import io.fireflysoftware.core.insurance.policies.sdk.model.PolicyDTO;
 import io.fireflysoftware.domain.insurance.policies.core.commands.CreatePolicyCommand;
 import io.fireflysoftware.domain.insurance.policies.core.commands.UpdatePolicyStatusCommand;
+import io.fireflysoftware.domain.insurance.policies.core.commands.UpdatePolicyCommand;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -51,4 +52,47 @@ public interface PoliciesService {
      * @return the record, or empty when the core has none
      */
     Mono<PolicyDTO> get(UUID policyId);
+
+    /**
+     * Updates fields on a policy and leaves its status unchanged.
+     *
+     * @param command the update
+     * @return the record returned by the core
+     */
+    Mono<PolicyDTO> update(UpdatePolicyCommand command);
+
+    /**
+     * Cancels a policy when the policies core allows CANCELLED.
+     *
+     * @param policyId the core identifier
+     * @param statusReason optional reason stored by the status saga when the core keeps one
+     * @return the updated record
+     */
+    Mono<PolicyDTO> cancel(UUID policyId, String statusReason);
+
+    /**
+     * Lapses an in-force policy when the policies core allows LAPSED.
+     *
+     * @param policyId the core identifier
+     * @param statusReason optional reason stored by the status saga when the core keeps one
+     * @return the updated record
+     */
+    Mono<PolicyDTO> lapse(UUID policyId, String statusReason);
+
+    /**
+     * Expires a policy when the policies core allows EXPIRED.
+     *
+     * @param policyId the core identifier
+     * @param statusReason optional reason stored by the status saga when the core keeps one
+     * @return the updated record
+     */
+    Mono<PolicyDTO> expire(UUID policyId, String statusReason);
+
+    /**
+     * Deletes a policy when the core lifecycle allows removal.
+     *
+     * @param policyId the core identifier
+     * @return completion when the core has deleted the record
+     */
+    Mono<Void> remove(UUID policyId);
 }

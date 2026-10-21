@@ -18,6 +18,7 @@ package io.fireflysoftware.domain.insurance.policies.web.controllers;
 
 import io.fireflysoftware.core.insurance.policies.sdk.model.PolicyDTO;
 import io.fireflysoftware.domain.insurance.policies.core.services.PoliciesService;
+import io.fireflysoftware.domain.insurance.policies.interfaces.dtos.ReasonRequest;
 import io.fireflysoftware.domain.insurance.policies.interfaces.dtos.StatusChangeRequest;
 import org.fireflyframework.web.error.config.ErrorHandlingProperties;
 import org.fireflyframework.web.error.converter.ExceptionConverterService;
@@ -107,5 +108,46 @@ class PoliciesControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(PolicyDTO.class);
+    }
+
+    @Test
+    void update_returns200() {
+        UUID id = UUID.randomUUID();
+        when(service.update(any())).thenReturn(Mono.just(new PolicyDTO(id)));
+
+        webTestClient.put()
+                .uri("/api/v1/policies/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new PolicyDTO())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PolicyDTO.class);
+    }
+
+    @Test
+    void cancel_returns200() {
+        UUID id = UUID.randomUUID();
+        when(service.cancel(any(), any())).thenReturn(Mono.just(new PolicyDTO(id)));
+        ReasonRequest request = new ReasonRequest();
+        request.setStatusReason("Caller request");
+
+        webTestClient.post()
+                .uri("/api/v1/policies/{id}/cancel", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PolicyDTO.class);
+    }
+
+    @Test
+    void remove_returns204() {
+        UUID id = UUID.randomUUID();
+        when(service.remove(id)).thenReturn(Mono.empty());
+
+        webTestClient.delete()
+                .uri("/api/v1/policies/{id}", id)
+                .exchange()
+                .expectStatus().isNoContent();
     }
 }

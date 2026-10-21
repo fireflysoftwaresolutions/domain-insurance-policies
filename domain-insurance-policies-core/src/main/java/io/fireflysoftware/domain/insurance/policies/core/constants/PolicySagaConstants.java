@@ -44,6 +44,14 @@ public final class PolicySagaConstants {
     public static final String CTX_RECORD = "policyIdRecord";
     public static final String CTX_PREVIOUS_STATUS = "previousPolicyStatus";
 
+
+    public static final String SAGA_UPDATE_RECORD = "UpdatePolicySaga";
+    public static final String STEP_RETRIEVE_FOR_UPDATE = "retrievePolicyForUpdate";
+    public static final String STEP_UPDATE_RECORD = "updatePolicy";
+    public static final String COMPENSATE_RESTORE_RECORD = "restorePolicy";
+    public static final String EVENT_RECORD_UPDATED = "policies.updated";
+    public static final String CTX_PREVIOUS_RECORD = "previousPolicyRecord";
+
     private PolicySagaConstants() {
     }
 }
