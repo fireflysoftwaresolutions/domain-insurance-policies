@@ -15,6 +15,8 @@ servers:
 - url: /
   description: Local Development Environment
 tags:
+- name: GovernedPolicies
+  description: Governed sandbox binding orchestration through the Core policy owner
 - name: Policies
   description: Domain orchestration for insurance policy records
 paths:
@@ -35,8 +37,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -72,8 +76,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -103,8 +109,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -140,8 +148,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -167,8 +177,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -187,6 +199,42 @@ paths:
                 $ref: "#/components/schemas/PolicyDTO"
         "404":
           description: Not found
+  /api/v1/policies/{policyId}/governed/issue:
+    post:
+      tags:
+      - GovernedPolicies
+      summary: Activate an existing bound sandbox policy locally; no carrier or certificate
+        effect
+      operationId: issueGovernedPolicy
+      parameters:
+      - name: policyId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GovernedPolicyIssueRequest"
+        required: true
+      responses:
+        "401":
+          description: Verified identity required
+        "403":
+          description: Current scoped authority refused
+        "503":
+          description: Trusted governed policy service is not configured
+        "200":
+          description: Exact activation outcome bound to the original action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GovernedPolicyCommandResponse"
+      security:
+      - bearerAuth: []
+      x-disable-idempotency: true
   /api/v1/policies/{policyId}/expire:
     post:
       tags:
@@ -204,8 +252,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -241,8 +291,10 @@ paths:
           format: uuid
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -261,18 +313,79 @@ paths:
                 $ref: "#/components/schemas/PolicyDTO"
         "404":
           description: Not found
+  /api/v1/policies/governed/intents:
+    post:
+      tags:
+      - GovernedPolicies
+      summary: Prepare the opaque owner intent digest without authorizing or reserving
+        a policy mutation
+      operationId: prepareGovernedPolicyIntent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GovernedPolicyIntentRequest"
+        required: true
+      responses:
+        "401":
+          description: Verified identity required
+        "403":
+          description: Current scoped authority refused
+        "503":
+          description: Trusted governed policy service is not configured
+        "200":
+          description: Exact action and opaque owner-codec digest; proves no current
+            policy state or authority
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GovernedPolicyPreparedIntent"
+      security:
+      - bearerAuth: []
+      x-disable-idempotency: true
+  /api/v1/policies/governed/bindings:
+    post:
+      tags:
+      - GovernedPolicies
+      summary: Bind an accepted sandbox quote to an existing validated contract
+      operationId: bindGovernedPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GovernedPolicyBindRequest"
+        required: true
+      responses:
+        "401":
+          description: Verified identity required
+        "403":
+          description: Current scoped authority refused
+        "503":
+          description: Trusted governed policy service is not configured
+        "200":
+          description: Exact command outcome; recover the same action if uncertain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GovernedPolicyCommandResponse"
+      security:
+      - bearerAuth: []
+      x-disable-idempotency: true
   /api/v1/policies:
     post:
       tags:
       - Policies
       summary: Create policy
-      description: Runs the register saga against core-insurance-policies.
+      description: "Validates the party, links the contract, then runs the register\
+        \ saga."
       operationId: create
       parameters:
       - name: X-Idempotency-Key
         in: header
-        description: "Unique key for idempotent requests. If provided, ensures that\
-          \ identical requests with the same key will only be processed once."
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
         required: false
         schema:
           type: string
@@ -280,7 +393,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PolicyDTO"
+              $ref: "#/components/schemas/PolicyCreateRequest"
         required: true
       responses:
         "201":
@@ -291,6 +404,48 @@ paths:
                 $ref: "#/components/schemas/PolicyDTO"
         "400":
           description: Invalid request
+  /api/v1/policies/governed/recovery/{actionId}:
+    get:
+      tags:
+      - GovernedPolicies
+      summary: Observe the original retained action without creating another mutation
+      operationId: recoverGovernedPolicyBinding
+      parameters:
+      - name: actionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: intentDigest
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: X-Idempotency-Key
+        in: header
+        description: "Optional retry key for scoped POST, PUT, PATCH, and DELETE response\
+          \ reuse. Safe methods ignore it. Reuse requires configured trusted identity\
+          \ and namespace; changed input returns 409. Business effects require durable\
+          \ application idempotency."
+        required: false
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Verified identity required
+        "403":
+          description: Current scoped authority refused
+        "503":
+          description: Trusted governed policy service is not configured
+        "200":
+          description: Protected retained observation; absence does not prove no commit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GovernedPolicyRecoveryResponse"
+      security:
+      - bearerAuth: []
 components:
   schemas:
     StatusChangeRequest:
@@ -374,3 +529,263 @@ components:
       properties:
         statusReason:
           type: string
+    GovernedPolicyIssueRequest:
+      required:
+      - actionId
+      - bindingReceiptDigest
+      - expectedBindingVersion
+      type: object
+      properties:
+        actionId:
+          type: string
+          format: uuid
+        expectedBindingVersion:
+          type: integer
+          format: int64
+        bindingReceiptDigest:
+          type: string
+    GovernedPolicyBindingResult:
+      required:
+      - acceptanceActionId
+      - acceptanceId
+      - bindingReceiptDigest
+      - bindingVersion
+      - offerId
+      - offerVersion
+      - policyId
+      - policyNumber
+      - policyStatus
+      - termsDigest
+      type: object
+      properties:
+        policyId:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        policyStatus:
+          type: string
+          enum:
+          - BOUND
+          - IN_FORCE
+        bindingVersion:
+          type: integer
+          format: int64
+        bindingReceiptDigest:
+          type: string
+        acceptanceActionId:
+          type: string
+          format: uuid
+        acceptanceId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        offerVersion:
+          type: integer
+          format: int64
+        termsDigest:
+          type: string
+      nullable: true
+    GovernedPolicyCommandResponse:
+      required:
+      - actionId
+      - intentDigest
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - COMMITTED
+          - COMMITTED_RESPONSE_UNAVAILABLE
+          - OUTCOME_UNKNOWN
+          - REFUSED
+        actionId:
+          type: string
+          format: uuid
+        intentDigest:
+          type: string
+        result:
+          $ref: "#/components/schemas/GovernedPolicyBindingResult"
+    GovernedPolicyBindRequest:
+      required:
+      - acceptanceActionId
+      - acceptanceIntentDigest
+      - acceptedControlGeneration
+      - actionId
+      - contractId
+      - expiryDate
+      - inceptionDate
+      - offerId
+      - offerVersion
+      - partyId
+      - policyNumber
+      - productId
+      - submissionId
+      - termsDigest
+      type: object
+      properties:
+        actionId:
+          type: string
+          format: uuid
+        submissionId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        offerVersion:
+          type: integer
+          format: int64
+        acceptedControlGeneration:
+          type: integer
+          format: int64
+        acceptanceActionId:
+          type: string
+          format: uuid
+        acceptanceIntentDigest:
+          type: string
+        termsDigest:
+          type: string
+        contractId:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        inceptionDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+    GovernedPolicyIntentRequest:
+      required:
+      - operation
+      type: object
+      properties:
+        operation:
+          type: string
+          enum:
+          - BIND
+          - ISSUE
+        bindRequest:
+          $ref: "#/components/schemas/GovernedPolicyBindRequest"
+        policyId:
+          type: string
+          format: uuid
+        issueRequest:
+          $ref: "#/components/schemas/GovernedPolicyIssueRequest"
+    GovernedPolicyPreparedIntent:
+      required:
+      - actionId
+      - intentDigest
+      - operation
+      type: object
+      properties:
+        operation:
+          type: string
+          enum:
+          - BIND
+          - ISSUE
+        actionId:
+          type: string
+          format: uuid
+        intentDigest:
+          type: string
+    PolicyCreateRequest:
+      required:
+      - inceptionDate
+      - lineOfBusiness
+      - partyId
+      - policyNumber
+      - policyStatus
+      - productId
+      - tenantId
+      type: object
+      properties:
+        partyId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        contractId:
+          type: string
+          format: uuid
+          nullable: true
+        productId:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        lineOfBusiness:
+          type: string
+          enum:
+          - MOTOR
+          - PROPERTY
+          - LIABILITY
+          - LIFE
+          - HEALTH
+          - MARINE
+          - AVIATION
+          - ACCIDENT
+          - OTHER
+        policyStatus:
+          type: string
+          enum:
+          - QUOTE
+          - BOUND
+          - IN_FORCE
+          - LAPSED
+          - CANCELLED
+          - EXPIRED
+        currency:
+          type: string
+        inceptionDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        renewalDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    GovernedPolicyRecoveryResponse:
+      required:
+      - actionId
+      - intentDigest
+      - state
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - FOUND
+          - NOT_OBSERVED_AT_THIS_READ
+          - INTENT_CONFLICT
+        actionId:
+          type: string
+          format: uuid
+        intentDigest:
+          type: string
+        result:
+          $ref: "#/components/schemas/GovernedPolicyBindingResult"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

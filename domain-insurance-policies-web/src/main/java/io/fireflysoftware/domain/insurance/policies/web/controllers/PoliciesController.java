@@ -22,6 +22,7 @@ import io.fireflysoftware.domain.insurance.policies.core.commands.CreatePolicyCo
 import io.fireflysoftware.domain.insurance.policies.core.commands.UpdatePolicyCommand;
 import io.fireflysoftware.domain.insurance.policies.core.commands.UpdatePolicyStatusCommand;
 import io.fireflysoftware.domain.insurance.policies.core.services.PoliciesService;
+import io.fireflysoftware.domain.insurance.policies.interfaces.dtos.PolicyCreateRequest;
 import io.fireflysoftware.domain.insurance.policies.interfaces.dtos.ReasonRequest;
 import io.fireflysoftware.domain.insurance.policies.interfaces.dtos.StatusChangeRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +46,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -56,11 +57,9 @@ import java.util.UUID;
 public class PoliciesController {
 
     private final PoliciesService service;
-    private final ObjectMapper json;
 
     public PoliciesController(PoliciesService service, ObjectMapper json) {
         this.service = service;
-        this.json = json;
     }
 
     @Operation(summary = "Create policy", description = "Validates the party, links the contract, then runs the register saga.")
@@ -71,11 +70,21 @@ public class PoliciesController {
             @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content)
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<PolicyDTO>> create(@RequestBody Map<String, Object> body) {
-        Object party = body.remove("partyId");
-        UUID partyId = party == null ? null : UUID.fromString(String.valueOf(party));
-        PolicyDTO policy = json.convertValue(body, PolicyDTO.class);
-        return service.create(new CreatePolicyCommand(policy, partyId))
+    public Mono<ResponseEntity<PolicyDTO>> create(@Valid @RequestBody PolicyCreateRequest request) {
+        PolicyDTO policy = new PolicyDTO()
+                .tenantId(request.getTenantId())
+                .contractId(request.getContractId())
+                .productId(request.getProductId())
+                .policyNumber(request.getPolicyNumber())
+                .lineOfBusiness(request.getLineOfBusiness())
+                .policyStatus(request.getPolicyStatus())
+                .currency(request.getCurrency())
+                .inceptionDate(request.getInceptionDate())
+                .expiryDate(request.getExpiryDate())
+                .renewalDate(request.getRenewalDate())
+                .createdAt(request.getCreatedAt())
+                .updatedAt(request.getUpdatedAt());
+        return service.create(new CreatePolicyCommand(policy, request.getPartyId()))
                 .map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created));
     }
 

@@ -1,0 +1,13 @@
+# Typed policy creation contract
+
+`POST /api/v1/policies` accepts the flat `PolicyCreateRequest` producer model. It carries `partyId` alongside the existing policy fields. `partyId` is a required UUID: missing, null, or malformed values return HTTP 400 before a create command reaches the application service.
+
+`contractId` is optional: null or absent means that the customer-contract link creates a new contract before the policy write. A supplied identifier selects the existing-contract validation/link path. The producer model marks it optional and nullable. Actual generated OpenAPI JSON/YAML must preserve nullability in its declared dialect before any generated-client compatibility claim.
+
+The controller constructs a separate Core `PolicyDTO` and passes the party identifier through `CreatePolicyCommand`. The existing handler confirms the party and resolves/attaches the customer contract before calling the genuine Core Policies SDK. The party identifier is not added to the Core policy payload. Read/update/status/close commands and their public service interface are unchanged.
+
+This changes the producer's create-request Java type from a raw map. Consumers must regenerate the Domain client from the original producer OpenAPI document; generated client classes and the document must not be edited by hand. The checked-in generated contract will be updated only after the separate producer-generation qualification. No same-version artifact is installed or published by this source qualification.
+
+Creating a policy record does not establish accepted quote terms, premium posting, document issuance, or successful binding. The Experience binding boundary continues to refuse with `INSURANCE_BINDING_UNAVAILABLE` until authoritative positive quote acceptance and recoverable policy/document prerequisites qualify. Sandbox customer-contract collaborators do not establish a real customer or insurer transaction.
+
+The create input intentionally excludes `policyId`. The original Core producer DTO declares that property `JsonProperty.Access.READ_ONLY`, and its original database migration defines a generated UUID default. The published Core SDK has a getter without a setter but does not preserve the producer's read-only annotation; accessor shape alone is not proof of HTTP enforcement. The typed Domain controller does not forward caller-supplied policy identity. This source qualification verifies that projection and the declared producer contract; it does not claim a live Core HTTP/database identity-allocation test. All other writable policy fields, including created/updated timestamps, retain their existing projection.
