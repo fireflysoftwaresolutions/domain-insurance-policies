@@ -21,7 +21,12 @@
     <dependencies>
         <dependency>
             <groupId>io.fireflysoftware</groupId>
-            <artifactId>domain-insurance-policies-core</artifactId>
+            <artifactId>core-insurance-policies-sdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.fireflysoftware</groupId>
+            <artifactId>core-insurance-policies-interfaces</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.fireflyframework</groupId>
@@ -46,6 +51,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

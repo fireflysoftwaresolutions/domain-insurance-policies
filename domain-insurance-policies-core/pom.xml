@@ -21,6 +21,10 @@
     <dependencies>
         <dependency>
             <groupId>io.fireflysoftware</groupId>
+            <artifactId>domain-insurance-policies-interfaces</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.fireflysoftware</groupId>
             <artifactId>domain-insurance-policies-infra</artifactId>
         </dependency>
         <dependency>
