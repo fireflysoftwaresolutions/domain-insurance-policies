@@ -26,8 +26,9 @@ class GeneratedGovernedPolicyTransportTest {
         final List<Sent> sent=new CopyOnWriteArrayList<>();
         final List<Set<String>> requestedScopes=new CopyOnWriteArrayList<>();
         final List<GovernedPoliciesApi> apis=new CopyOnWriteArrayList<>();
-        HttpStatus status=HttpStatus.OK;String response;boolean connectionLost;
+        HttpStatus status=HttpStatus.OK;String response;boolean connectionLost,acquisitionUnavailable;
         @Override public Mono<Client> requireCurrent(Set<String> scopes){return Mono.deferContextual(context->{
+            if(acquisitionUnavailable)return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE));
             String caller=context.get(CALLER);requestedScopes.add(Set.copyOf(scopes));
             ClientHttpConnector connector=(method,uri,callback)->{
                 var request=new MockClientHttpRequest(method,uri);
@@ -52,7 +53,7 @@ class GeneratedGovernedPolicyTransportTest {
     @Test void genuineGeneratedCoreApiAndModelsComeFromTheSelectedSourceReactor()throws Exception{
         var expected=java.nio.file.Path.of("..","..","core-insurance-policies","core-insurance-policies-sdk","target","classes").toRealPath();
         for(Class<?> type:List.of(GovernedPoliciesApi.class,io.fireflysoftware.core.insurance.policies.sdk.model.GovernedPolicyCommandResponse.class,io.fireflysoftware.core.insurance.policies.sdk.model.GovernedPolicyRecoveryResponse.class))
-            assertEquals(expected,java.nio.file.Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toRealPath());
+            FreshSourceSdkFixture.require(type,expected);
     }
     @Test void actualGeneratedBindCarriesTheCompleteImmutableIntentAndBearer(){
         var factory=new FactoryFixtureImpl();var request=request();factory.response=command(request.actionId(),request.intentDigest(),"OUTCOME_UNKNOWN");
@@ -89,10 +90,10 @@ class GeneratedGovernedPolicyTransportTest {
         StepVerifier.create(caller(service(factory).bind(request),"human-A")).assertNext(value->{assertEquals(GovernedPolicyCommandResponse.Status.OUTCOME_UNKNOWN,value.status());assertEquals(request.actionId(),value.actionId());assertEquals(request.intentDigest(),value.intentDigest());assertNull(value.result());}).verifyComplete();assertEquals(1,factory.sent.size());
     }
     @Test void generatedForbiddenAndPreworkUnavailableRemainFailures(){
-        for(var status:List.of(HttpStatus.FORBIDDEN,HttpStatus.SERVICE_UNAVAILABLE)){
-            var factory=new FactoryFixtureImpl();factory.status=status;factory.response="{}";
-            StepVerifier.create(caller(service(factory).bind(request()),"human-A")).expectErrorSatisfies(error->assertEquals(status,((ResponseStatusException)error).getStatusCode())).verify();assertEquals(1,factory.sent.size());
-        }
+        var refused=new FactoryFixtureImpl();refused.status=HttpStatus.FORBIDDEN;refused.response="{}";
+        StepVerifier.create(caller(service(refused).bind(request()),"human-A")).expectErrorSatisfies(error->assertEquals(HttpStatus.FORBIDDEN,((ResponseStatusException)error).getStatusCode())).verify();assertEquals(1,refused.sent.size());
+        var unavailable=new FactoryFixtureImpl();unavailable.acquisitionUnavailable=true;
+        StepVerifier.create(caller(service(unavailable).bind(request()),"human-A")).expectErrorSatisfies(error->assertEquals(HttpStatus.SERVICE_UNAVAILABLE,((ResponseStatusException)error).getStatusCode())).verify();assertTrue(unavailable.sent.isEmpty());
     }
     @Test void malformedSuccessAfterPossibleDispatchRequiresOriginalRecovery(){
         var factory=new FactoryFixtureImpl();var request=request();factory.response="{\"status\":\"COMMITTED\"}";

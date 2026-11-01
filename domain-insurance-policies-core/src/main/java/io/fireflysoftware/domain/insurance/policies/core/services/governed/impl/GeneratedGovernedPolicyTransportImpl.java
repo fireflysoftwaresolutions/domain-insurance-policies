@@ -63,7 +63,7 @@ public final class GeneratedGovernedPolicyTransportImpl implements GovernedPolic
                 .flatMap(reply->reply.getStatusCode().value()==200 && reply.getBody()!=null?Mono.just(reply.getBody()):Mono.error(new GovernedPolicyOutcomeUnknownException()))
                 .map(value->new GovernedPolicyCommandResponse(GovernedPolicyCommandResponse.Status.valueOf(value.getStatus().getValue()),value.getActionId(),value.getIntentDigest(),result(value.getResult())))
                 .switchIfEmpty(Mono.error(new GovernedPolicyOutcomeUnknownException())).onErrorMap(error->{
-                    if(error instanceof WebClientResponseException response && knownRefusal(response))return new ResponseStatusException(response.getStatusCode(),"Governed policy owner request refused");
+                    if(error instanceof WebClientResponseException response && response.getStatusCode().value()!=503 && knownRefusal(response))return new ResponseStatusException(response.getStatusCode(),"Governed policy owner request refused");
                     return new GovernedPolicyOutcomeUnknownException();
                 });
     });}
