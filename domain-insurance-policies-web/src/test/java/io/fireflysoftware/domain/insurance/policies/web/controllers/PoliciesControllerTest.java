@@ -64,7 +64,7 @@ class PoliciesControllerTest {
         webTestClient.post()
                 .uri("/api/v1/policies")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(new PolicyDTO())
+                .bodyValue(java.util.Map.of("partyId", UUID.randomUUID()))
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(PolicyDTO.class);
